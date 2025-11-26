@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PneumoScan AI - Diagnostic Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            /* Deeper, modern dark background */
+            background: radial-gradient(circle at top right, #1f2937, #0f172a); 
+            font-family: 'Inter', sans-serif;
+        }
+        .card-advanced {
+            /* Sophisticated, less bright glass effect */
+            background: rgba(30, 41, 59, 0.8); /* Slate-800 */
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(71, 85, 105, 0.3); /* Slate-600 */
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.8s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .btn-advance {
+            background-color: #06b6d4; /* Cyan-500 */
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .btn-advance:hover {
+            background-color: #0891b2; /* Cyan-600 */
+            box-shadow: 0 5px 20px rgba(6, 182, 212, 0.5);
+            transform: translateY(-2px);
+        }
+        .drop-area {
+            border: 3px dashed #34d399; /* Emerald-400 */
+            transition: border-color 0.3s;
+        }
+        .drop-area-active {
+            border-color: #06b6d4; /* Cyan-500 */
+            background-color: rgba(6, 182, 212, 0.1);
+        }
+    </style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen text-white p-6">
+
+    <div class="card-advanced p-12 w-full max-w-2xl text-center">
+        
+        <h1 class="text-5xl font-extrabold mb-2 text-cyan-400">Pneumonia Diagnostic AI</h1>
+        <p class="text-gray-400 mb-10 text-lg">Upload X-Ray Image for Secure, High-Speed Analysis.</p>
+
+        <form action="/predict" method="POST" enctype="multipart/form-data">
+            
+            <div id="upload-container" class="space-y-4">
+                
+                <label id="drop-zone" class="drop-area block p-12 rounded-xl cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-emerald-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 014 4v1.832c.38.165.753.33 1.12.483l-1.12.483V10a6 6 0 00-6-6h-.06C14.71 3.23 13.9 3 13 3a6 6 0 00-6 6v7z" />
+                    </svg>
+                    <p class="text-xl font-semibold text-gray-200">Drag file here or click to select</p>
+                    <p class="text-sm text-gray-400 mt-1">Accepted formats: JPG, PNG. Max size: 5MB.</p>
+                    <input type="file" name="file" id="file-upload" class="hidden" required accept="image/jpeg,image/png">
+                </label>
+
+                <div id="preview-box" class="hidden relative p-4 bg-slate-700/50 rounded-lg border border-slate-600">
+                    <h3 class="text-lg font-semibold text-left mb-3 border-b border-slate-700 pb-2">File Preview:</h3>
+                    <img id="image-preview" class="max-h-64 object-contain mx-auto rounded-lg shadow-xl" src="" alt="X-Ray Preview">
+                    <p id="file-name-display" class="text-sm text-gray-400 mt-3"></p>
+                    <button type="button" id="remove-file" class="absolute top-2 right-2 text-red-400 hover:text-red-500 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+            </div>
+
+            <button 
+                type="submit"
+                id="analyze-btn"
+                class="mt-8 w-full py-4 text-xl font-bold rounded-xl btn-advance disabled:opacity-50"
+                disabled
+            >
+                ANALYZE X-RAY
+            </button>
+        </form>
+
+        <p class="text-xs text-gray-500 mt-6">Secure processing. Results are preliminary and require clinical review.</p>
+    </div>
+
+<script>
+    const fileUpload = document.getElementById('file-upload');
+    const dropZone = document.getElementById('drop-zone');
+    const previewBox = document.getElementById('preview-box');
+    const imagePreview = document.getElementById('image-preview');
+    const fileNameDisplay = document.getElementById('file-name-display');
+    const removeFileBtn = document.getElementById('remove-file');
+    const analyzeBtn = document.getElementById('analyze-btn');
+
+    function handleFile(file) {
+        if (!file) return;
+
+        // Basic validation
+        if (!['image/jpeg', 'image/png'].includes(file.type)) {
+            alert("Invalid file type. Please upload a JPG or PNG image.");
+            return;
+        }
+
+        // Set file to input
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileUpload.files = dataTransfer.files;
+
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imagePreview.src = e.target.result;
+            fileNameDisplay.textContent = `File Name: ${file.name} | Size: ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+            dropZone.classList.add('hidden');
+            previewBox.classList.remove('hidden');
+            analyzeBtn.disabled = false;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Handle standard file selection
+    fileUpload.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+    // Handle drag-and-drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false); // Prevents opening file in browser
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('drop-area-active'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('drop-area-active'), false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const file = dt.files[0];
+        handleFile(file);
+    }, false);
+
+    function preventDefaults (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    // Handle file removal
+    removeFileBtn.addEventListener('click', () => {
+        fileUpload.value = ''; // Clear file input
+        dropZone.classList.remove('hidden');
+        previewBox.classList.add('hidden');
+        analyzeBtn.disabled = true;
+    });
+</script>
+</body>
+</html>
