@@ -7,15 +7,7 @@ venv/
 *.h5   
 .DS_Store
 # Ignore dataset folder (images, large files)
+
+# Ignore dataset
 dataset/
 
-# Ignore Python cache files
-__pycache__/
-*.pyc
-
-# Ignore model checkpoints (agar large ho)
-model/*.h5
-
-# Ignore IDE/editor files
-*.vscode/
-*.idea/
